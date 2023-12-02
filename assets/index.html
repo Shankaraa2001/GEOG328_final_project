@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox GL JS Example</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYXJvdmFsbzEiLCJhIjoiY2xuMjIxdWN3MDNzZTJqcDl2MG52YXljdCJ9.15FPJT1Za5hG1aJxdvn-XA';
+
+
+        // Create a new map instance
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v10', // Use your preferred map style
+            center: [-122.3321, 47.6062], // [longitude, latitude] (Seattle coordinates)
+            zoom: 9
+        });
+
+        // Add navigation control to the map
+        map.addControl(new mapboxgl.NavigationControl());
+
+
+        // GeoJSON data source
+        map.on('load', function () {
+            map.addSource('park-boundaries', {
+                type: 'geojson',
+                data: 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/2/query?outFields=*&where=1%3D1&f=geojson'
+            });
+
+            // Add a layer to the map
+            map.addLayer({
+                id: 'park-boundaries-layer',
+                type: 'fill',
+                source: 'park-boundaries',
+                paint: {
+                    'fill-color': 'rgba(0, 100, 0, 0.4)', // Adjust the color as needed
+                    'fill-outline-color': 'rgba(0, 100, 0, 1)'
+                }
+            });
+
+            map.addLayer({
+                id: 'park-boundaries-labels',
+                type: 'symbol',
+                source: 'park-boundaries',
+                layout: {
+                    'text-field': ['get', 'PARK_NAME'],
+                    'text-size': 12,
+                    'text-anchor': 'top'
+                },
+                paint: {
+                    'text-color': 'rgba(0, 0, 0, 0.8)'
+                }
+            });
+        });
+    </script>
+</body>
+</html>
