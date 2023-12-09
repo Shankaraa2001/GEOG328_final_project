@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox GL JS Example</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #toggleHeatmap { position: absolute; top: 10px; left: 10px; z-index: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <div id="toggleHeatmap">
+        <label>
+            <input type="checkbox" id="heatmapToggle"> Toggle Heatmap
+        </label>
+    </div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.0/dist/mapbox-gl-draw.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.0/dist/mapbox-gl-draw.css" type="text/css"/>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYXJvdmFsbzEiLCJhIjoiY2xwdXV0bW9mMDA0aTJxcDVlM2h4bW1vdCJ9.fHcnd4Zt51VTP83d0c2Tbg';
+
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v10',
+            center: [-122.3321, 47.6062],
+            zoom: 9
+        });
+
+        map.addControl(new mapboxgl.NavigationControl());
+
+        var heatmapToggle = document.getElementById('heatmapToggle');
+
+        map.on('load', function () {
+            try {
+                map.addSource('tileset-data', {
+                    url: 'mapbox://arovalo1.9sw4cprv',
+                    type: 'vector'
+                });
+
+                function updateLayer(type) {
+                    if (type === 'circle') {
+                        map.setLayoutProperty('circles', 'visibility', 'visible');
+                        map.setLayoutProperty('heatmap-layer', 'visibility', 'none');
+                    } else if (type === 'heatmap') {
+                        map.setLayoutProperty('circles', 'visibility', 'none');
+                        map.setLayoutProperty('heatmap-layer', 'visibility', 'visible');
+                    }
+                }
+
+                heatmapToggle.addEventListener('change', function () {
+                    var isChecked = heatmapToggle.checked;
+                    var layerType = isChecked ? 'heatmap' : 'circle';
+                    updateLayer(layerType);
+                });
+
+                map.addLayer({
+                    id: 'circles',
+                    type: 'circle',
+                    source: 'tileset-data',
+                    'source-layer': 'SPD_Crime_Data__2008-Present-3idtwe',
+                    paint: {
+                        'circle-color': '#FF00FF',
+                        'circle-radius': 2
+                    }
+                });
+
+                map.addLayer({
+                    id: 'heatmap-layer',
+                    type: 'heatmap',
+                    source: 'tileset-data',
+                    'source-layer': 'SPD_Crime_Data__2008-Present-3idtwe',
+                    paint: {
+                        'heatmap-weight': 1,
+                        'heatmap-intensity': 1,
+                        'heatmap-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['heatmap-density'],
+                        0, 'rgba(0, 0, 255, 0)',
+                        0.1, 'rgba(128, 0, 128, 0.5)', // Dark Purple
+                        0.3, 'rgba(148, 0, 211, 0.5)', // Purple
+                        0.5, 'rgba(186, 85, 211, 0.5)', // Medium Purple
+                        0.7, 'rgba(221, 160, 221, 0.5)', // Light Purple
+                        1, 'rgba(255, 0, 255, 0.5)' // Magenta
+                    ],
+                        'heatmap-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            0, 2,
+                            9, 20
+                        ],
+                        'heatmap-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            7, 1,
+                            9, 0.5
+                        ]
+                    },
+                    layout: {
+                        'visibility': 'none'
+                    }
+                });
+
+                map.addSource('park-boundaries', {
+                    type: 'geojson',
+                    data: 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/2/query?outFields=*&where=1%3D1&f=geojson'
+                });
+
+                map.addLayer({
+                    id: 'park-boundaries-layer',
+                    type: 'fill',
+                    source: 'park-boundaries',
+                    paint: {
+                        'fill-color': 'rgba(0, 100, 0, 0.4)',
+                        'fill-outline-color': 'rgba(0, 100, 0, 1)'
+                    }
+                });
+
+                map.addLayer({
+                    id: 'park-boundaries-labels',
+                    type: 'symbol',
+                    source: 'park-boundaries',
+                    layout: {
+                        'text-field': ['get', 'PARK_NAME'],
+                        'text-size': 12,
+                        'text-anchor': 'top'
+                    },
+                    paint: {
+                        'text-color': 'rgba(0, 0, 0, 0.8)'
+                    }
+                });
+
+                // Bounding box selections with feature highlighting
+                var draw = new MapboxDraw({
+                    displayControlsDefault: false,
+                    controls: {
+                        polygon: true,
+                        trash: true
+                    }
+                });
+                map.addControl(draw)
+
+                map.on('draw.create', updateBoundingBox);
+                map.on('draw.update', updateBoundingBox);
+
+                function updateBoundingBox(event){
+                    var boundingBox = event.features[0].geometry.coordinates[0];
+                    var featuresInBoundingBox = map.query.RenderedFeatures({ layers: ['circles', 'heatmap-layer']});
+                    
+                    // Reset styles for all features
+                    map.setPaintProperty('park-boundaries-layer', 'fill-color', 'rgba(0, 100, 0, 0.4)');
+                    map.setPaintProperty('park-boundaries-layer', 'fill-outline-color', 'rgba(0, 100, 0, 1)');
+
+                    // Highlight park boundaries within the bounding box
+                    featuresInBoundingBox.forEach(function (feature) {
+                        var layerId = feature.layer.id;
+
+                        if (layerId === 'park-boundaries-layer') {
+                            var parkId = feature.properties.OBJECTID; // Adjust based on your data structure
+                            console.log('Selected OBJECTID:', objectId);
+
+                            // Customize the highlighted style
+                            map.setPaintProperty('park-boundaries-layer', 'fill-color', 'rgba(255, 0, 0, 0.6)');
+                            map.setPaintProperty('park-boundaries-layer', 'fill-outline-color', 'rgba(255, 0, 0, 1)');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
