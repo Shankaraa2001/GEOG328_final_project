@@ -8,7 +8,33 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        #toggleHeatmap { position: absolute; top: 10px; left: 10px; z-index: 1; }
+        #toggleHeatmap { position: absolute; top: 330px; right: 30px; z-index: 1; }
+
+        #sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 170px;
+            height: 60%;
+            background-color: #ffffff3c;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            overflow: auto;
+        }
+        
+        #feature-info {
+            margin-bottom: 20px;
+        }
+        
+        #feature-info h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        #feature-info p {
+            margin: 0;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -18,6 +44,13 @@
         <label>
             <input type="checkbox" id="heatmapToggle"> Toggle Heatmap
         </label>
+    </div>
+    <div id="sidebar">
+        <div id="feature-info">
+            <h2>Selected Feature</h2>
+            <p id="feature-type"></p>
+            <p id="feature-id"></p>
+        </div>
     </div>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
@@ -141,26 +174,29 @@
                     }
                 });
 
-                // Bounding box selections with feature highlighting
-                var draw = new MapboxDraw({
+                 // Bounding box selections with feature highlighting
+                 var draw = new MapboxDraw({
                     displayControlsDefault: false,
                     controls: {
                         polygon: true,
                         trash: true
                     }
                 });
-                map.addControl(draw)
+                map.addControl(draw);
 
                 map.on('draw.create', updateBoundingBox);
                 map.on('draw.update', updateBoundingBox);
 
-                function updateBoundingBox(event){
+                function updateBoundingBox(event) {
                     var boundingBox = event.features[0].geometry.coordinates[0];
-                    var featuresInBoundingBox = map.query.RenderedFeatures({ layers: ['circles', 'heatmap-layer']});
-                    
+                    var featuresInBoundingBox = map.queryRenderedFeatures({ layers: ['circles', 'heatmap-layer'] });
+
                     // Reset styles for all features
                     map.setPaintProperty('park-boundaries-layer', 'fill-color', 'rgba(0, 100, 0, 0.4)');
                     map.setPaintProperty('park-boundaries-layer', 'fill-outline-color', 'rgba(0, 100, 0, 1)');
+
+                    document.getElementById('feature-type').textContent = "";
+                    document.getElementById('feature-id').textContent = "";
 
                     // Highlight park boundaries within the bounding box
                     featuresInBoundingBox.forEach(function (feature) {
@@ -168,14 +204,31 @@
 
                         if (layerId === 'park-boundaries-layer') {
                             var parkId = feature.properties.OBJECTID; // Adjust based on your data structure
-                            console.log('Selected OBJECTID:', objectId);
 
                             // Customize the highlighted style
                             map.setPaintProperty('park-boundaries-layer', 'fill-color', 'rgba(255, 0, 0, 0.6)');
                             map.setPaintProperty('park-boundaries-layer', 'fill-outline-color', 'rgba(255, 0, 0, 1)');
+
+                            // Update the sidebar content with information about the selected park
+                            document.getElementById('feature-type').textContent = 'Park Boundary';
+                            document.getElementById('feature-id').textContent = 'ID: ' + parkId;
+                        } else if (layerId === 'circles' || layerId === 'heatmap-layer') {
+                            // Handle selection for the circles or heatmap-layer
+                            // You can customize this part based on your data structure
+                            var featureId = feature.properties.YOUR_FEATURE_ID; // Adjust based on your data structure
+
+                            // Update the sidebar content with information about the selected dot
+                            document.getElementById('feature-type').textContent = 'Dot';
+                            document.getElementById('feature-id').textContent = 'ID: ' + featureId;
                         }
                     });
                 }
+
+                map.on('click', function (e) {
+                    var featuresInBoundingBox = map.queryRenderedFeatures(e.point);
+                    // Perform additional actions on click if needed
+                });
+
             } catch (error) {
                 console.error('Error:', error);
             }
