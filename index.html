@@ -35,6 +35,37 @@
             margin: 0;
             font-size: 14px;
         }
+
+.legend {
+position: absolute;
+top: 10px;
+left: 10px;
+background-color: #ffffff;
+padding: 10px;
+border-radius: 5px;
+box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.legend h2 {
+font-size: 16px;
+margin-bottom: 5px;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+margin-bottom: 5px;
+}
+
+.legend-color {
+width: 20px;
+height: 20px;
+margin-right: 5px;
+}
+
+.legend-label {
+font-size: 14px;
+}
     </style>
 </head>
 <body>
@@ -50,6 +81,18 @@
             <h2>Selected Feature</h2>
             <p id="feature-type"></p>
             <p id="feature-id"></p>
+        </div>
+    </div>
+
+    <div id="legend" class="legend">
+        <h2>Legend</h2>
+        <div id="crime-legend" class="legend-item">
+            <div class="legend-color" style="background-color: #FF00FF;"></div>
+            <div class="legend-label">Crime Occurence</div>
+        </div>
+        <div id="park-legend" class="legend-item">
+            <div class="legend-color" style="background-color: rgba(0, 100, 0, 0.4);"></div>
+            <div class="legend-label">Park Boundaries</div>
         </div>
     </div>
 
@@ -233,6 +276,18 @@
                 console.error('Error:', error);
             }
         });
+
+        map.on('zoom', function () {
+        updateLegend();
+        });
+
+        map.on('layervisibility', function () {
+        updateLegend();
+        });
+
+        function updateLegend() {
+        document.getElementById('legend').style.display = 'block';
+        }
     </script>
 </body>
 </html>
