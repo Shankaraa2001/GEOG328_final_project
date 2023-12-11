@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parks and Crime: A Mapbox GL JS Example</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #toggleHeatmap { position: absolute; top: 330px; right: 30px; z-index: 1; }
+
+        #sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 170px;
+            height: 60%;
+            background-color: #ffffff3c;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            overflow: auto;
+        }
+
+        #feature-info {
+            margin-bottom: 20px;
+        }
+
+        #feature-info h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        #feature-info p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .legend {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend h2 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
+        .legend-label {
+            font-size: 14px;
+        }
+
+        body { margin: 0; padding: 0; }
+        #map {position: absolute; top: 0; bottom: 0; width: 100%;}
+    </style>
+</head>
+
+<body>
+
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Toggle Heatmap checkbox -->
+    <div id="toggleHeatmap">
+        <label>
+            <input type="checkbox" id="heatmapToggle"> Toggle Heatmap
+        </label>
+    </div>
+
+    <!-- Sidebar for selected feature information -->
+    <div id="sidebar">
+        <div id="feature-info">
+            <h2>Selected Feature</h2>
+            <p id="feature-type"></p>
+            <p id="feature-id"></p>
+        </div>
+    </div>
+
+    <!-- Legend for crime occurrence and park boundaries -->
+    <div id="legend" class="legend">
+        <h2>Legend</h2>
+        <div id="crime-legend" class="legend-item">
+            <div class="legend-color" style="background-color: #FF00FF;"></div>
+            <div class="legend-label">Crime Occurrence</div>
+        </div>
+        <div id="park-legend" class="legend-item">
+            <div class="legend-color" style="background-color: rgba(0, 100, 0, 0.4);"></div>
+            <div class="legend-label">Park Boundaries</div>
+        </div>
+    </div>
+
+    <!-- Mapbox and additional libraries -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+    <script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.0/dist/mapbox-gl-draw.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.0/dist/mapbox-gl-draw.css" type="text/css"/>
+
+    <!-- JavaScript code for map configuration and functionality -->
+    <script>
+        // Mapbox API token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYXJvdmFsbzEiLCJhIjoiY2xwdXV0bW9mMDA0aTJxcDVlM2h4bW1vdCJ9.fHcnd4Zt51VTP83d0c2Tbg';
+
+        // Initialize Mapbox map
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v10',
+            center: [-122.3321, 47.6062],
+            zoom: 9
+        });
+
+        // Add navigation control to the map
+        map.addControl(new mapboxgl.NavigationControl());
+
+        // Get reference to the heatmap toggle checkbox
+        var heatmapToggle = document.getElementById('heatmapToggle');
+
+        // Event handler for map load
+        map.on('load', function () {
+            try {
+                // Add crime data as a vector tileset source
+                map.addSource('tileset-data', {
+                    url: 'mapbox://arovalo1.6ep6iaol',
+                    type: 'vector'
+                });
+
+                // Function to update layer visibility based on the selected type
+                function updateLayer(type) {
+                    if (type === 'circle') {
+                        map.setLayoutProperty('circles', 'visibility', 'visible');
+                        map.setLayoutProperty('heatmap-layer', 'visibility', 'none');
+                    } else if (type === 'heatmap') {
+                        map.setLayoutProperty('circles', 'visibility', 'none');
+                        map.setLayoutProperty('heatmap-layer', 'visibility', 'visible');
+                    }
+                }
+
+                // Event listener for heatmap toggle checkbox
+                heatmapToggle.addEventListener('change', function () {
+                    var isChecked = heatmapToggle.checked;
+                    var layerType = isChecked ? 'heatmap' : 'circle';
+                    updateLayer(layerType);
+                });
+
+                // Add circle layer for crime points
+                map.addLayer({
+                    id: 'circles',
+                    type: 'circle',
+                    source: 'tileset-data',
+                    'source-layer': 'Crime_points-2a6ttw',
+                    paint: {
+                        'circle-color': '#FF00FF',
+                        'circle-radius': 1
+                    }
+                });
+
+                // Add heatmap layer for crime points
+                map.addLayer({
+                    id: 'heatmap-layer',
+                    type: 'heatmap',
+                    source: 'tileset-data',
+                    'source-layer': 'Crime_points-2a6ttw',
+                    paint: {
+                        'heatmap-weight': 1,
+                        'heatmap-intensity': 1,
+                        'heatmap-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['heatmap-density'],
+                            0,                             'rgba(0, 0, 255, 0)',
+                            0.1, 'rgba(128, 0, 128, 0.5)', // Dark Purple
+                            0.3, 'rgba(148, 0, 211, 0.5)', // Purple
+                            0.5, 'rgba(186, 85, 211, 0.5)', // Medium Purple
+                            0.7, 'rgba(221, 160, 221, 0.5)', // Light Purple
+                            1, 'rgba(255, 0, 255, 0.5)' // Magenta
+                        ],
+                        'heatmap-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            0, 2,
+                            9, 5
+                        ],
+                        'heatmap-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            7, 1,
+                            9, 0.5
+                        ]
+                    },
+                    layout: {
+                        'visibility': 'none'
+                    }
+                });
+
+                // Add source for park boundaries
+                map.addSource('park-boundaries', {
+                    type: 'geojson',
+                    data: 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/2/query?outFields=*&where=1%3D1&f=geojson'
+                });
+
+                // Add layer for park boundaries
+                map.addLayer({
+                    id: 'park-boundaries-layer',
+                    type: 'fill',
+                    source: 'park-boundaries',
+                    paint: {
+                        'fill-color': 'rgba(0, 100, 0, 0.4)',
+                        'fill-outline-color': 'rgba(0, 100, 0, 1)'
+                    }
+                });
+
+                // Add labels for park boundaries
+                map.addLayer({
+                    id: 'park-boundaries-labels',
+                    type: 'symbol',
+                    source: 'park-boundaries',
+                    layout: {
+                        'text-field': ['get', 'PARK_NAME'],
+                        'text-size': 12,
+                        'text-anchor': 'top'
+                    },
+                    paint: {
+                        'text-color': 'rgba(0, 0, 0, 0.8)'
+                    }
+                });
+
+                // Event listener for zoom and layer visibility changes
+                map.on('zoom', function () {
+                    updateLegend();
+                });
+
+                map.on('layervisibility', function () {
+                    updateLegend();
+                });
+
+                // Function to update legend visibility
+                function updateLegend() {
+                    document.getElementById('legend').style.display = 'block';
+                }
+
+                // Event listener for map click
+                map.on('click', function (e) {
+                    var features = map.queryRenderedFeatures(e.point, { layers: ['circles', 'heatmap-layer', 'park-boundaries-layer'] });
+
+                    if (features.length > 0) {
+                        var selectedFeature = features[0];
+                        updateSidebarContent(selectedFeature);
+                    } else {
+                        updateSidebarContent(null);
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Function to update sidebar content based on selected feature
+        function updateSidebarContent(feature) {
+            var featureInfo = document.getElementById('feature-info');
+
+            if (feature) {
+                featureInfo.style.display = 'block';
+
+                var parkName = feature.properties.NAME;
+
+                document.getElementById('feature-id').textContent = 'Park Name: ' + parkName;
+            } else {
+                featureInfo.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
+
