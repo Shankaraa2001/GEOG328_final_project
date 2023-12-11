@@ -36,36 +36,39 @@
             font-size: 14px;
         }
 
-.legend {
-position: absolute;
-top: 10px;
-left: 10px;
-background-color: #ffffff;
-padding: 10px;
-border-radius: 5px;
-box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
+        .legend {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
 
-.legend h2 {
-font-size: 16px;
-margin-bottom: 5px;
-}
+        .legend h2 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
 
-.legend-item {
-display: flex;
-align-items: center;
-margin-bottom: 5px;
-}
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
 
-.legend-color {
-width: 20px;
-height: 20px;
-margin-right: 5px;
-}
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
 
-.legend-label {
-font-size: 14px;
-}
+        .legend-label {
+            font-size: 14px;
+        }
+
+        body { margin: 0; padding: 0; }
+        #map {position: absolute; top: 0; bottom: 0; width: 100%;}
     </style>
 </head>
 <body>
@@ -88,7 +91,7 @@ font-size: 14px;
         <h2>Legend</h2>
         <div id="crime-legend" class="legend-item">
             <div class="legend-color" style="background-color: #FF00FF;"></div>
-            <div class="legend-label">Crime Occurence</div>
+            <div class="legend-label">Crime Occurrence</div>
         </div>
         <div id="park-legend" class="legend-item">
             <div class="legend-color" style="background-color: rgba(0, 100, 0, 0.4);"></div>
@@ -118,7 +121,7 @@ font-size: 14px;
         map.on('load', function () {
             try {
                 map.addSource('tileset-data', {
-                    url: 'mapbox://arovalo1.9sw4cprv',
+                    url: 'mapbox://arovalo1.6ep6iaol',
                     type: 'vector'
                 });
 
@@ -142,10 +145,10 @@ font-size: 14px;
                     id: 'circles',
                     type: 'circle',
                     source: 'tileset-data',
-                    'source-layer': 'SPD_Crime_Data__2008-Present-3idtwe',
+                    'source-layer': 'Crime_points-2a6ttw',
                     paint: {
                         'circle-color': '#FF00FF',
-                        'circle-radius': 2
+                        'circle-radius': .5
                     }
                 });
 
@@ -153,7 +156,7 @@ font-size: 14px;
                     id: 'heatmap-layer',
                     type: 'heatmap',
                     source: 'tileset-data',
-                    'source-layer': 'SPD_Crime_Data__2008-Present-3idtwe',
+                    'source-layer': 'Crime_points-2a6ttw',
                     paint: {
                         'heatmap-weight': 1,
                         'heatmap-intensity': 1,
@@ -166,128 +169,99 @@ font-size: 14px;
                         0.3, 'rgba(148, 0, 211, 0.5)', // Purple
                         0.5, 'rgba(186, 85, 211, 0.5)', // Medium Purple
                         0.7, 'rgba(221, 160, 221, 0.5)', // Light Purple
-                        1, 'rgba(255, 0, 255, 0.5)' // Magenta
-                    ],
-                        'heatmap-radius': [
-                            'interpolate',
-                            ['linear'],
-                            ['zoom'],
-                            0, 2,
-                            9, 20
+                        1, 'rgba(255, 0,                         255, 0.5)' // Magenta
                         ],
-                        'heatmap-opacity': [
-                            'interpolate',
-                            ['linear'],
-                            ['zoom'],
-                            7, 1,
-                            9, 0.5
-                        ]
-                    },
-                    layout: {
-                        'visibility': 'none'
-                    }
-                });
-
-                map.addSource('park-boundaries', {
-                    type: 'geojson',
-                    data: 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/2/query?outFields=*&where=1%3D1&f=geojson'
-                });
-
-                map.addLayer({
-                    id: 'park-boundaries-layer',
-                    type: 'fill',
-                    source: 'park-boundaries',
-                    paint: {
-                        'fill-color': 'rgba(0, 100, 0, 0.4)',
-                        'fill-outline-color': 'rgba(0, 100, 0, 1)'
-                    }
-                });
-
-                map.addLayer({
-                    id: 'park-boundaries-labels',
-                    type: 'symbol',
-                    source: 'park-boundaries',
-                    layout: {
-                        'text-field': ['get', 'PARK_NAME'],
-                        'text-size': 12,
-                        'text-anchor': 'top'
-                    },
-                    paint: {
-                        'text-color': 'rgba(0, 0, 0, 0.8)'
-                    }
-                });
-
-                 // Bounding box selections with feature highlighting
-                 var draw = new MapboxDraw({
-                    displayControlsDefault: false,
-                    controls: {
-                        polygon: true,
-                        trash: true
-                    }
-                });
-                map.addControl(draw);
-
-                map.on('draw.create', updateBoundingBox);
-                map.on('draw.update', updateBoundingBox);
-
-                function updateBoundingBox(event) {
-                    var boundingBox = event.features[0].geometry.coordinates[0];
-                    var featuresInBoundingBox = map.queryRenderedFeatures({ layers: ['circles', 'heatmap-layer'] });
-
-                    // Reset styles for all features
-                    map.setPaintProperty('park-boundaries-layer', 'fill-color', 'rgba(0, 100, 0, 0.4)');
-                    map.setPaintProperty('park-boundaries-layer', 'fill-outline-color', 'rgba(0, 100, 0, 1)');
-
-                    document.getElementById('feature-type').textContent = "";
-                    document.getElementById('feature-id').textContent = "";
-
-                    // Highlight park boundaries within the bounding box
-                    featuresInBoundingBox.forEach(function (feature) {
-                        var layerId = feature.layer.id;
-
-                        if (layerId === 'park-boundaries-layer') {
-                            var parkId = feature.properties.OBJECTID; // Adjust based on your data structure
-
-                            // Customize the highlighted style
-                            map.setPaintProperty('park-boundaries-layer', 'fill-color', 'rgba(255, 0, 0, 0.6)');
-                            map.setPaintProperty('park-boundaries-layer', 'fill-outline-color', 'rgba(255, 0, 0, 1)');
-
-                            // Update the sidebar content with information about the selected park
-                            document.getElementById('feature-type').textContent = 'Park Boundary';
-                            document.getElementById('feature-id').textContent = 'ID: ' + parkId;
-                        } else if (layerId === 'circles' || layerId === 'heatmap-layer') {
-                            // Handle selection for the circles or heatmap-layer
-                            // You can customize this part based on your data structure
-                            var featureId = feature.properties.YOUR_FEATURE_ID; // Adjust based on your data structure
-
-                            // Update the sidebar content with information about the selected dot
-                            document.getElementById('feature-type').textContent = 'Dot';
-                            document.getElementById('feature-id').textContent = 'ID: ' + featureId;
+                            'heatmap-radius': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                0,                             2,
+                                9, 20
+                            ],
+                            'heatmap-opacity': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                7, 1,
+                                9, 0.5
+                            ]
+                        },
+                        layout: {
+                            'visibility': 'none'
                         }
                     });
+    
+                    map.addSource('park-boundaries', {
+                        type: 'geojson',
+                        data: 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/2/query?outFields=*&where=1%3D1&f=geojson'
+                    });
+    
+                    map.addLayer({
+                        id: 'park-boundaries-layer',
+                        type: 'fill',
+                        source: 'park-boundaries',
+                        paint: {
+                            'fill-color': 'rgba(0, 100, 0, 0.4)',
+                            'fill-outline-color': 'rgba(0, 100, 0, 1)'
+                        }
+                    });
+    
+                    map.addLayer({
+                        id: 'park-boundaries-labels',
+                        type: 'symbol',
+                        source: 'park-boundaries',
+                        layout: {
+                            'text-field': ['get', 'PARK_NAME'],
+                            'text-size': 12,
+                            'text-anchor': 'top'
+                        },
+                        paint: {
+                            'text-color': 'rgba(0, 0, 0, 0.8)'
+                        }
+                    });
+    
+                    map.on('zoom', function () {
+                        updateLegend();
+                    });
+    
+                    map.on('layervisibility', function () {
+                        updateLegend();
+                    });
+    
+                    function updateLegend() {
+                        document.getElementById('legend').style.display = 'block';
+                    }
+                    
+                    map.on ('click', function (e) {
+                        var features = map.queryRenderedFeatures(e.point, { layers: ['circles', 'heatmap-layer', 'park-boundaries-layer'] });
+                        
+                        if (features.length > 0) {
+                            var selectedFeature = features[0]; // You can customize this logic based on your requirements
+                            updateSidebarContent(selectedFeature);
+                        } else {
+                            updateSidebarContent(null);
+                        }
+                    });
+    
+                } catch (error) {
+                    console.error('Error:', error);
                 }
+            });
+            
+            function updateSidebarContent(feature) {
+                var featureInfo = document.getElementById('feature-info');
+                
+                if (feature) {
+                    featureInfo.style.display = 'block';
 
-                map.on('click', function (e) {
-                    var featuresInBoundingBox = map.queryRenderedFeatures(e.point);
-                    // Perform additional actions on click if needed
-                });
+                    var parkName = feature.properties.NAME;
 
-            } catch (error) {
-                console.error('Error:', error);
+                    //document.getElementById('feature-type').textContent = 'Type: ' + feature.layer.id;
+                    document.getElementById('feature-id').textContent = 'Park Name: ' + parkName;
+                } else {
+                    featureInfo.style.display = 'none';
+                }
             }
-        });
-
-        map.on('zoom', function () {
-        updateLegend();
-        });
-
-        map.on('layervisibility', function () {
-        updateLegend();
-        });
-
-        function updateLegend() {
-        document.getElementById('legend').style.display = 'block';
-        }
-    </script>
-</body>
-</html>
+        </script>
+    </body>
+    </html>
