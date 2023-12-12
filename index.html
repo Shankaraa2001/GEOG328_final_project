@@ -9,18 +9,35 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        #toggleHeatmap { position: absolute; top: 330px; right: 30px; z-index: 1; }
+        #toggleHeatmap { position: absolute; top: 470px; right: 20px; z-index: 1; color: #f1f1f1f0; }
+
+        #title {
+            position: absolute;
+            top: 0%;
+            left: 10%; /* Set left to 50% to center horizontally */
+            transform: translateX(-50%); /* Move it back by 50% of its own width */
+            width: 200px;
+            height: 25%;
+            background-color: #ffffff3c;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            color: #f1f1f1f0; /* Set text color to magenta */
+            text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Add a black outline */
+        }
+        
 
         #sidebar {
             position: absolute;
-            top: 0;
+            bottom: 10%;
             right: 0;
-            width: 170px;
+            width: 130px;
             height: 60%;
             background-color: #ffffff3c;
             box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
             padding: 10px;
-            overflow: auto;
+            color: #f1f1f1f0;
+            text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Add a black outline */
+
         }
 
         #feature-info {
@@ -39,23 +56,28 @@
 
         .legend {
             position: absolute;
-            top: 10px;
+            bottom: 10%;
             left: 10px;
-            background-color: #ffffff;
+            background-color: #ffffff3c;
             padding: 10px;
             border-radius: 5px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+            
         }
 
         .legend h2 {
             font-size: 16px;
             margin-bottom: 5px;
+            color: #f1f1f1f0; /* Set text color to magenta */
+            text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Add a black outline */
         }
 
         .legend-item {
             display: flex;
             align-items: center;
             margin-bottom: 5px;
+            color: #f1f1f1f0
+
         }
 
         .legend-color {
@@ -88,7 +110,7 @@
     <!-- Sidebar for selected feature information -->
     <div id="sidebar">
         <div id="feature-info">
-            <h2>Selected Feature</h2>
+            <h2>Selected Feature:</h2>
             <p id="feature-type"></p>
             <p id="feature-id"></p>
         </div>
@@ -105,6 +127,11 @@
             <div class="legend-color" style="background-color: rgba(0, 100, 0, 0.4);"></div>
             <div class="legend-label">Park Boundaries</div>
         </div>
+    </div>
+
+    <!-- Title for the map-->
+    <div id="title" class="title">
+        <h2>A visual analysis of public green spaces and incidents of crime</h2>
     </div>
 
     <!-- Mapbox and additional libraries -->
